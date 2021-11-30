@@ -3,12 +3,38 @@ package b_Money;
 import java.util.Hashtable;
 
 public class Account {
+	private final String name;
 	private Money content;
-	//changed to public, so that it's accessible for tests
-	public Hashtable<String, TimedPayment> timedpayments = new Hashtable<String, TimedPayment>();
+	private final Hashtable<String, TimedPayment> timedpayments;
 
-	Account(String name, Currency currency) {
-		this.content = new Money(0, currency);
+	Account(String name, Money content, Hashtable<String, TimedPayment> timedpayments) {
+		this.name = name;
+		this.content = content;
+		this.timedpayments = timedpayments;
+	}
+
+	/**
+	 * Get the name of this account
+	 * @return name of this account
+	 */
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * Get the content of this account
+	 * @return content of this account
+	 */
+	public Money getContent() {
+		return this.content;
+	}
+
+	/**
+	 * Get the list of timed payments of this account
+	 * @return list of timed payments of this account
+	 */
+	public Hashtable<String, TimedPayment> getTimedPayments(){
+		return this.timedpayments;
 	}
 
 	/**
@@ -20,17 +46,29 @@ public class Account {
 	 * @param tobank Bank where receiving account resides
 	 * @param toaccount Id of receiving account
 	 */
-	public void addTimedPayment(String id, Integer interval, Integer next, Money amount, Bank tobank, String toaccount) {
-		TimedPayment tp = new TimedPayment(interval, next, amount, this, tobank, toaccount);
-		timedpayments.put(id, tp);
+	public void addTimedPayment(String id, Integer interval, Integer next, Money amount, Bank tobank, String toaccount) throws TimedPaymentExistsException {
+		//wrong initially --failed by testAddRemoveTimedPayment()
+		//added exception check
+		if (timedPaymentExists(id)) {
+			throw new TimedPaymentExistsException();
+		} else {
+			TimedPayment tp = new TimedPayment(interval, next, amount, this, tobank, toaccount);
+			timedpayments.put(id, tp);
+		}
 	}
 	
 	/**
 	 * Remove a timed payment
 	 * @param id Id of timed payment to remove
 	 */
-	public void removeTimedPayment(String id) {
-		timedpayments.remove(id);
+	public void removeTimedPayment(String id) throws TimedPaymentDoesNotExistException {
+		//wrong initially --failed by testAddRemoveTimedPayment()
+		//added exception check
+		if (!timedPaymentExists(id)) {
+			throw new TimedPaymentDoesNotExistException();
+		} else {
+			timedpayments.remove(id);
+		}
 	}
 	
 	/**
@@ -45,8 +83,9 @@ public class Account {
 	 * A time unit passes in the system
 	 */
 	public void tick() {
+		//removed one tick()
 		for (TimedPayment tp : timedpayments.values()) {
-			tp.tick(); tp.tick();
+			tp.tick();
 		}
 	}
 	
@@ -70,17 +109,19 @@ public class Account {
 	 * Get balance of account
 	 * @return Amount of Money currently on account
 	 */
-	public Money getBalance() {
-		return content;
+	public Integer getBalance() {
+		//replaced return content;
+		return content.getAmount();
 	}
 
 	/* Everything below belongs to the private inner class, TimedPayment */
-	private class TimedPayment {
-		private int interval, next;
-		private Account fromaccount;
-		private Money amount;
-		private Bank tobank;
-		private String toaccount;
+	static class TimedPayment {
+		private final int interval;
+		private int next;
+		private final Account fromaccount;
+		private final Money amount;
+		private final Bank tobank;
+		private final String toaccount;
 		
 		TimedPayment(Integer interval, Integer next, Money amount, Account fromaccount, Bank tobank, String toaccount) {
 			this.interval = interval;

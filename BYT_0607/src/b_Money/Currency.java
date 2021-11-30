@@ -1,9 +1,7 @@
 package b_Money;
 
-import java.text.DecimalFormat;
-
 public class Currency {
-	private String name;
+	private final String name;
 	private Double rate;
 	
 	/**
@@ -27,21 +25,7 @@ public class Currency {
 	 * @return The value of amount in the "universal currency"
 	 */
 	public Integer universalValue(Integer amount) {
-		//for amount==0 because of multiplication the result will be 0
-		if (amount == 0) { return 0; }
-		//we turn amount into char[], and then assemble a string 
-		//with 2 last digits placed after a dot at the end
-		char[] arr = amount.toString().toCharArray();
-		int len = arr.length;
-		String s = "";
-		for (int i = 0; i < len - 2; i++) {
-			s += arr[i];
-		}
-		s += "." + arr[len-2] + arr[len-1];
-		//main operation
-		Double res = Double.parseDouble(s) * this.rate;
-		//apply required formatting
-		return Integer.parseInt(new DecimalFormat("0.00").format(res).toString().replaceAll("\\,", ""));
+		return (int) (amount * (this.getRate()));
 	}
 
 	/** Get the name of this Currency.
@@ -73,20 +57,6 @@ public class Currency {
 	 * @param othercurrency The other Currency
 	*/
 	public Integer valueInThisCurrency(Integer amount, Currency othercurrency) {
-		//for amount==0 because of multiplication the result will be 0
-		if (amount == 0) { return 0; }
-		//we turn amount into char[], and then assemble a string 
-		//with 2 last digits placed after a dot at the end
-		char[] arr = amount.toString().toCharArray();
-		int len = arr.length;
-		String s = "";
-		for (int i = 0; i < len - 2; i++) {
-			s += arr[i];
-		}
-		s += "." + arr[len-2] + arr[len-1];
-		//main operation
-		Double res = Double.parseDouble(s) * othercurrency.rate / this.rate;
-		//apply required formatting
-		return Integer.parseInt(new DecimalFormat("0.00").format(res).toString().replaceAll("\\,", ""));
+		return (int) (othercurrency.universalValue(amount)/this.getRate());
 	}
 }

@@ -1,10 +1,8 @@
 package b_Money;
 
-import java.text.DecimalFormat;
-
 public class Money implements Comparable {
-	private int amount;
-	private Currency currency;
+	private final int amount;
+	private final Currency currency;
 
 	/**
 	 * New Money
@@ -40,17 +38,17 @@ public class Money implements Comparable {
 	 */
 	public String toString() {
 		//for amount==0 formatting is not required
-		if (amount == 0) { return "0 " + this.currency.getName(); }
+		if (this.getAmount() == 0) { return "0 " + this.getCurrency().getName(); }
 		//we turn amount into char[], and then assemble a string 
 		//with 2 last digits placed after a dot at the end
-		char[] arr = Integer.valueOf(amount).toString().toCharArray();
+		char[] arr = this.getAmount().toString().toCharArray();
 		int len = arr.length;
-		String s = "";
+		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < len - 2; i++) {
-			s += arr[i];
+			s.append(arr[i]);
 		}
-		s += "." + arr[len-2] + arr[len-1];
-		return s + " " + this.currency.getName();
+		s.append(".").append(arr[len - 2]).append(arr[len - 1]);
+		return s + " " + this.getCurrency().getName();
 	}
 	
 	/**
@@ -58,21 +56,7 @@ public class Money implements Comparable {
 	 * @return The value of the Money in the "universal currency".
 	 */
 	public Integer universalValue() {
-		//for amount==0 because of multiplication the result will be 0
-		if (amount == 0) { return 0; }
-		//we turn amount into char[], and then assemble a string 
-		//with 2 last digits placed after a dot at the end
-		char[] arr = Integer.valueOf(amount).toString().toCharArray();
-		int len = arr.length;
-		String s = "";
-		for (int i = 0; i < len - 2; i++) {
-			s += arr[i];
-		}
-		s += "." + arr[len-2] + arr[len-1];
-		//main operation
-		Double res = Double.parseDouble(s) * this.currency.getRate();
-		//applying formatting
-		return Integer.parseInt(new DecimalFormat("0.00").format(res).toString().replaceAll("\\,", ""));
+		return (int) (this.getAmount() * (this.getCurrency().getRate()));
 	}
 	
 	/**
@@ -94,10 +78,10 @@ public class Money implements Comparable {
 	public Money add(Money other) {
 		//no need for conversion if currencies are the same
 		if (other.getCurrency().equals(this.getCurrency())) {
-			return new Money(this.amount + other.amount, this.currency);
+			return new Money(this.getAmount() + other.getAmount(), this.getCurrency());
 		}
-		Integer convertedamount = this.currency.valueInThisCurrency(other.amount, other.currency);
-		return new Money(this.amount + convertedamount, this.currency);
+		Integer conver_amount = this.getCurrency().valueInThisCurrency(other.getAmount(), other.getCurrency());
+		return new Money(this.getAmount() + conver_amount, this.getCurrency());
 	}
 
 	/**
@@ -109,10 +93,10 @@ public class Money implements Comparable {
 	public Money sub(Money other) {
 		//no need for conversion if currencies are the same
 		if (other.getCurrency().equals(this.getCurrency())) {
-			return new Money(this.amount - other.amount, this.currency);
+			return new Money(this.getAmount() - other.getAmount(), this.getCurrency());
 		}
-		Integer convertedamount = this.currency.valueInThisCurrency(other.amount, other.currency);
-		return new Money(this.amount - convertedamount, this.currency);
+		Integer conver_amount = this.getCurrency().valueInThisCurrency(other.getAmount(), other.getCurrency());
+		return new Money(this.getAmount() - conver_amount, this.getCurrency());
 	}
 	
 	/**
@@ -120,14 +104,14 @@ public class Money implements Comparable {
 	 * @return True if the amount of this Money is equal to 0.0, False otherwise
 	 */
 	public Boolean isZero() {
-		return this.amount == 0.0;
+		return this.getAmount() == 0.0;
 	}
 	/**
 	 * Negate the amount of money, i.e. if the amount is 10.0 SEK the negation returns -10.0 SEK
 	 * @return A new instance of the money class initialized with the new negated money amount.
 	 */
 	public Money negate() {
-		return new Money(-amount, this.currency);
+		return new Money(-this.getAmount(), this.getCurrency());
 	}
 	
 	/**

@@ -29,7 +29,6 @@ public class Quadrilateral {
 	
 	public Boolean isSquare() {
 		return (isRectangle() &&
-				l1.isSameLengthAs(l3) && 
 				l1.isSameLengthAs(l2));
 	}
 

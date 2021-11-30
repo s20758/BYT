@@ -4,18 +4,19 @@ import java.util.Hashtable;
 
 public class Bank {
 	//changed to public, so that it's accessible for tests
-	public Hashtable<String, Account> accountlist = new Hashtable<String, Account>();
-	private String name;
-	private Currency currency;
+	private final Hashtable<String, Account> accountlist;
+	private final String name;
+	private final Currency currency;
 	
 	/**
 	 * New Bank
 	 * @param name Name of this bank
 	 * @param currency Base currency of this bank (If this is a Swedish bank, this might be a currency class representing SEK)
 	 */
-	Bank(String name, Currency currency) {
+	Bank(String name, Currency currency, Hashtable<String,Account> accountlist) {
 		this.name = name;
 		this.currency = currency;
+		this.accountlist = accountlist;
 	}
 	
 	/**
@@ -33,6 +34,14 @@ public class Bank {
 	public Currency getCurrency() {
 		return currency;
 	}
+
+	/**
+	 * Get the AccountList of this bank
+	 * @return The List of Accounts opened in this bank
+	 */
+	public Hashtable<String, Account> getAccountList() {
+		return accountlist;
+	}
 	
 	/**
 	 * Open an account at this bank.
@@ -46,7 +55,7 @@ public class Bank {
 		}
 		else {
 			//replaced accountlist.get(accountid);
-			accountlist.put(accountid, new Account(accountid, currency));
+			accountlist.put(accountid, new Account(accountid, new Money(0, this.getCurrency()), new Hashtable<>()));
 		}
 	}
 	
@@ -63,8 +72,8 @@ public class Bank {
 			throw new AccountDoesNotExistException();
 		}
 		else {
-			Account account = accountlist.get(accountid);
-			account.deposit(money);
+			//replaced Account account = accountlist.get(accountid);
+			accountlist.get(accountid).deposit(money);
 		}
 	}
 	
@@ -75,14 +84,29 @@ public class Bank {
 	 * @throws AccountDoesNotExistException If the account does not exist
 	 */
 	public void withdraw(String accountid, Money money) throws AccountDoesNotExistException {
-		//wrong initially --by testWithdraw()
+		//wrong initially --failed by testWithdraw()
 		if (!accountlist.containsKey(accountid)) {
 			throw new AccountDoesNotExistException();
 		}
 		else {
-			Account account = accountlist.get(accountid);
-			//replaced account.deposit(money);
-			account.withdraw(money);
+			//replaced Account account = accountlist.get(accountid); account.deposit(money);
+			//here we check if there is enough money on the account to withdraw more
+			switch(accountlist.get(accountid).getContent().compareTo(money)) {
+
+				case 0:
+				case 1: {
+					accountlist.get(accountid).withdraw(money);
+					break;
+				}
+				case -1: {
+					try {
+						throw new Exception("Trying to withdraw more money that there is on the account");
+					} catch (Exception e) {
+						System.out.println(e.getMessage());
+					}
+					break;
+				}
+			}
 		}
 	}
 	
@@ -97,7 +121,7 @@ public class Bank {
 			throw new AccountDoesNotExistException();
 		}
 		else {
-			return accountlist.get(accountid).getBalance().getAmount();
+			return accountlist.get(accountid).getBalance();
 		}
 	}
 
@@ -110,12 +134,23 @@ public class Bank {
 	 * @throws AccountDoesNotExistException If one of the accounts do not exist
 	 */
 	public void transfer(String fromaccount, Bank tobank, String toaccount, Money amount) throws AccountDoesNotExistException {
+		//wrong initially --failed by testTransfer()
 		if (!accountlist.containsKey(fromaccount) || !tobank.accountlist.containsKey(toaccount)) {
 			throw new AccountDoesNotExistException();
 		}
 		else {
-			accountlist.get(fromaccount).withdraw(amount);
-			tobank.accountlist.get(toaccount).deposit(amount);
+			//checking withdrawal
+			int tmp = getBalance(fromaccount);
+			this.withdraw(fromaccount, amount);
+			if (tmp == this.getBalance(fromaccount)){
+				try {
+					throw new Exception("No transfer");
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+			} else {
+				tobank.deposit(toaccount, amount);
+			}
 		}		
 	}
 
@@ -147,38 +182,38 @@ public class Bank {
 	 * @param amount Amount of Money to transfer each payment
 	 * @param tobank Bank where receiving account resides
 	 * @param toaccount Id of receiving account
-	 * @throws AccountDoesNotExistException 
 	 */
-	public void addTimedPayment(String accountid, String payid, Integer interval, Integer next, Money amount, Bank tobank, String toaccount) throws AccountDoesNotExistException {
+	public void addTimedPayment(String accountid, String payid, Integer interval, Integer next, Money amount, Bank tobank, String toaccount) throws AccountDoesNotExistException, TimedPaymentExistsException {
 		//wrong initially --failed by testTimedPayment()
 		//added exception check
 		if (!accountlist.containsKey(accountid)) {
 			throw new AccountDoesNotExistException();
+		} else {
+			//replaced Account account = accountlist.get(accountid);
+			accountlist.get(accountid).addTimedPayment(payid, interval, next, amount, tobank, toaccount);
 		}
-		Account account = accountlist.get(accountid);
-		account.addTimedPayment(payid, interval, next, amount, tobank, toaccount);
 	}
 	
 	/**
 	 * Remove a timed payment
 	 * @param accountid Id of account to remove timed payment from
 	 * @param id Id of timed payment
-	 * @throws AccountDoesNotExistException 
 	 */
-	public void removeTimedPayment(String accountid, String id) throws AccountDoesNotExistException {
+	public void removeTimedPayment(String accountid, String id) throws AccountDoesNotExistException, TimedPaymentDoesNotExistException {
 		//wrong initially --failed by testTimedPayment()
 		//added exception check
 		if (!accountlist.containsKey(accountid)) {
 			throw new AccountDoesNotExistException();
+		} else {
+			//replaced Account account = accountlist.get(accountid);
+			accountlist.get(accountid).removeTimedPayment(id);
 		}
-		Account account = accountlist.get(accountid);
-		account.removeTimedPayment(id);
 	}
 	
 	/**
 	 * A time unit passes in the system
 	 */
-	public void tick() throws AccountDoesNotExistException {
+	public void tick() {
 		for (Account account : accountlist.values()) {
 			account.tick();
 		}
